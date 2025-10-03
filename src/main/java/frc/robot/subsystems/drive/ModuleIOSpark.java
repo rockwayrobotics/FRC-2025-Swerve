@@ -16,7 +16,6 @@ package frc.robot.subsystems.drive;
 import static frc.robot.subsystems.drive.DriveConstants.*;
 import static frc.robot.util.SparkUtil.*;
 
-import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
@@ -25,14 +24,17 @@ import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkClosedLoopController.ArbFFUnits;
+import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
+import frc.robot.sensors.ThriftyEncoder;
 import java.util.Queue;
 import java.util.function.DoubleSupplier;
 
@@ -47,7 +49,7 @@ public class ModuleIOSpark implements ModuleIO {
   private final SparkBase driveSpark;
   private final SparkBase turnSpark;
   private final RelativeEncoder driveEncoder;
-  private final AbsoluteEncoder turnEncoder;
+  private final ThriftyEncoder turnEncoder;
 
   // Closed loop controllers
   private final SparkClosedLoopController driveController;
@@ -65,46 +67,47 @@ public class ModuleIOSpark implements ModuleIO {
   public ModuleIOSpark(int module) {
     zeroRotation =
         switch (module) {
-          case 0 -> frontLeftZeroRotation;
-          case 1 -> frontRightZeroRotation;
-          case 2 -> backLeftZeroRotation;
-          case 3 -> backRightZeroRotation;
+          case 0 -> backRightZeroRotation;
+          case 1 -> backLeftZeroRotation;
+          case 2 -> frontLeftZeroRotation;
+          case 3 -> frontRightZeroRotation;
           default -> new Rotation2d();
         };
     driveSpark =
-        new SparkMax(
+        new SparkFlex(
             switch (module) {
-              case 0 -> frontLeftDriveCanId;
-              case 1 -> frontRightDriveCanId;
-              case 2 -> backLeftDriveCanId;
-              case 3 -> backRightDriveCanId;
+              case 0 -> backRightDriveCanId;
+              case 1 -> backLeftDriveCanId;
+              case 2 -> frontLeftDriveCanId;
+              case 3 -> frontRightDriveCanId;
               default -> 0;
             },
             MotorType.kBrushless);
     turnSpark =
         new SparkMax(
             switch (module) {
-              case 0 -> frontLeftTurnCanId;
-              case 1 -> frontRightTurnCanId;
-              case 2 -> backLeftTurnCanId;
-              case 3 -> backRightTurnCanId;
+              case 0 -> backRightTurnCanId;
+              case 1 -> backLeftTurnCanId;
+              case 2 -> frontLeftTurnCanId;
+              case 3 -> frontRightTurnCanId;
               default -> 0;
             },
             MotorType.kBrushless);
     driveEncoder = driveSpark.getEncoder();
-    turnEncoder = turnSpark.getAbsoluteEncoder();
+    // turnEncoder = turnSpark.getAbsoluteEncoder();
+    turnEncoder = new ThriftyEncoder(module % 4);
     driveController = driveSpark.getClosedLoopController();
     turnController = turnSpark.getClosedLoopController();
 
     // Configure drive motor
-    var driveConfig = new SparkMaxConfig();
+    var driveConfig = new SparkFlexConfig();
     /*
-    // Rebels code
-    final var driveConfig =
-        new SparkMaxConfig()
-            .idleMode(IdleMode.kBrake)
-            .smartCurrentLimit(drivetrain.driveMotor().currentLimit())
-            .voltageCompensation(drivetrain.driveMotor().nominalVoltage());
+     * // Rebels code
+     * final var driveConfig =
+     * new SparkMaxConfig()
+     * .idleMode(IdleMode.kBrake)
+     * .smartCurrentLimit(drivetrain.driveMotor().currentLimit())
+     * .voltageCompensation(drivetrain.driveMotor().nominalVoltage());
      */
     driveConfig
         .idleMode(IdleMode.kBrake)
@@ -112,21 +115,27 @@ public class ModuleIOSpark implements ModuleIO {
         .voltageCompensation(12.0);
 
     /*
-    // Rebels code
-    driveConfig.encoder.apply(
-       new EncoderConfig()
-           // apply position and velocity conversion factors for the driving encoder;
-           // the native units for position and velocity are rotations and RPM, respectively,
-           // but we want meters and meters per second to use with WPILib's swerve APIs
-           .positionConversionFactor(drivetrain.driveEncoderPositionFactor()) // Converts from rotations to meters
-           .velocityConversionFactor(drivetrain.driveEncoderVelocityFactor()) // Converts from rotations to m/s
-           // these parameters control the behavior of the velocity filter on the SPARK MAX
-           // default settings result in about 100+ms delay due to multiple samples being
-           // taken to filter out noise in the velocity readings; reducing depth results
-           // in higher noise in data, but reduces the lag
-           .quadratureMeasurementPeriod(DriveConstants.driveEncoderMeasurementPeriod) // 10
-           .quadratureAverageDepth(DriveConstants.driveEncoderMeasurementDepth)); // 4
-    */
+     * // Rebels code
+     * driveConfig.encoder.apply(
+     * new EncoderConfig()
+     * // apply position and velocity conversion factors for the driving encoder;
+     * // the native units for position and velocity are rotations and RPM,
+     * respectively,
+     * // but we want meters and meters per second to use with WPILib's swerve APIs
+     * .positionConversionFactor(drivetrain.driveEncoderPositionFactor()) //
+     * Converts from rotations to meters
+     * .velocityConversionFactor(drivetrain.driveEncoderVelocityFactor()) //
+     * Converts from rotations to m/s
+     * // these parameters control the behavior of the velocity filter on the SPARK
+     * MAX
+     * // default settings result in about 100+ms delay due to multiple samples
+     * being
+     * // taken to filter out noise in the velocity readings; reducing depth results
+     * // in higher noise in data, but reduces the lag
+     * .quadratureMeasurementPeriod(DriveConstants.driveEncoderMeasurementPeriod) //
+     * 10
+     * .quadratureAverageDepth(DriveConstants.driveEncoderMeasurementDepth)); // 4
+     */
     driveConfig
         .encoder
         .positionConversionFactor(driveEncoderPositionFactor) // Converts from rotations to radians
@@ -136,16 +145,16 @@ public class ModuleIOSpark implements ModuleIO {
         .uvwAverageDepth(2);
 
     /*
-    // Rebels code
-        driveConfig.closedLoop.apply(
-       new ClosedLoopConfig()
-           .p(DriveConstants.moduleFactors.driveMotor().kP()) // 0.3
-           .i(DriveConstants.moduleFactors.driveMotor().kI()) // 0.0
-           .d(DriveConstants.moduleFactors.driveMotor().kD()) // 0.0
-           .velocityFF(DriveConstants.moduleFactors.driveMotor().kFF()) // 0.0
-           .outputRange(-1, 1));
-
-    */
+     * // Rebels code
+     * driveConfig.closedLoop.apply(
+     * new ClosedLoopConfig()
+     * .p(DriveConstants.moduleFactors.driveMotor().kP()) // 0.3
+     * .i(DriveConstants.moduleFactors.driveMotor().kI()) // 0.0
+     * .d(DriveConstants.moduleFactors.driveMotor().kD()) // 0.0
+     * .velocityFF(DriveConstants.moduleFactors.driveMotor().kFF()) // 0.0
+     * .outputRange(-1, 1));
+     *
+     */
     driveConfig
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
@@ -231,7 +240,8 @@ public class ModuleIOSpark implements ModuleIO {
         turnSpark,
         turnEncoder::getPosition,
         (value) -> inputs.turnPosition = new Rotation2d(value).minus(zeroRotation));
-    ifOk(turnSpark, turnEncoder::getVelocity, (value) -> inputs.turnVelocityRadPerSec = value);
+    // FIXME: ifOk(turnSpark, turnEncoder::getVelocity, (value) -> inputs.turnVelocityRadPerSec =
+    // value);
     ifOk(
         turnSpark,
         new DoubleSupplier[] {turnSpark::getAppliedOutput, turnSpark::getBusVoltage},
