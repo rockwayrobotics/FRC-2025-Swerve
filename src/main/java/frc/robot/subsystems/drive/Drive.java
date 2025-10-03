@@ -186,23 +186,33 @@ public class Drive extends SubsystemBase {
     boolean doRejectUpdate = false;
     if (useMegaTag2 == false) {
       LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_basement("limelight");
-      Logger.recordOutput("Drive/LimelightPoseMT1", mt1.pose);
+      if (mt1 != null) {
+        for (var fid : mt1.rawFiducials) {
+          Logger.recordOutput("Limelight/Raw" + fid.id + "_tA", fid.ta);
+          Logger.recordOutput("Limelight/Raw" + fid.id + "_txnc", fid.txnc);
+          Logger.recordOutput("Limelight/Raw" + fid.id + "_tync", fid.tync);
+        }
+        Logger.recordOutput("Limelight/Tx", LimelightHelpers.getTX("limelight"));
+        Logger.recordOutput("Limelight/Ty", LimelightHelpers.getTY("limelight"));
 
-      if (mt1.tagCount == 1 && mt1.rawFiducials.length == 1) {
-        if (mt1.rawFiducials[0].ambiguity > .7) {
+        Logger.recordOutput("Limelight/LimelightPoseMT1", mt1.pose);
+
+        if (mt1.tagCount == 1 && mt1.rawFiducials.length == 1) {
+          if (mt1.rawFiducials[0].ambiguity > .7) {
+            doRejectUpdate = true;
+          }
+          if (mt1.rawFiducials[0].distToCamera > 3) {
+            doRejectUpdate = true;
+          }
+        }
+        if (mt1.tagCount == 0) {
           doRejectUpdate = true;
         }
-        if (mt1.rawFiducials[0].distToCamera > 3) {
-          doRejectUpdate = true;
-        }
-      }
-      if (mt1.tagCount == 0) {
-        doRejectUpdate = true;
-      }
 
-      if (!doRejectUpdate) {
-        // poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5, .5, 9999999));
-        // poseEstimator.addVisionMeasurement(mt1.pose, mt1.timestampSeconds);
+        if (!doRejectUpdate) {
+          // poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5, .5, 9999999));
+          // poseEstimator.addVisionMeasurement(mt1.pose, mt1.timestampSeconds);
+        }
       }
     } else if (useMegaTag2 == true) {
       LimelightHelpers.SetRobotOrientation(
@@ -240,16 +250,18 @@ public class Drive extends SubsystemBase {
    * @param speeds Speeds in meters/sec
    */
   public void runVelocity(ChassisSpeeds speeds) {
+    System.out.println(speeds.vxMetersPerSecond);
     // ChatGPT suggestion for how to slow the robot down (for safe practice in a
     // smaller space)
-    double translationalScale = RobotState.isAutonomous() ? 0.75 : 0.07; // Was 0.07
-    double rotationalScale = RobotState.isAutonomous() ? 0.75 : 0.08;
+    double translationalScale = RobotState.isAutonomous() ? 1 : 1; // Was 0.07
+    double rotationalScale = RobotState.isAutonomous() ? 1 : 1;
 
     ChassisSpeeds scaledSpeeds =
         new ChassisSpeeds(
             speeds.vxMetersPerSecond * translationalScale,
             speeds.vyMetersPerSecond * translationalScale,
             speeds.omegaRadiansPerSecond * rotationalScale);
+    Logger.recordOutput("Debug/runVelocity", scaledSpeeds);
 
     // Calculate module setpoints
     ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(scaledSpeeds, 0.02);
@@ -362,6 +374,7 @@ public class Drive extends SubsystemBase {
 
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
+    Logger.recordOutput("setPose", pose);
     poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
   }
 

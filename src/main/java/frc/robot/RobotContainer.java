@@ -157,6 +157,15 @@ public class RobotContainer {
                 () -> -controller.getLeftY(),
                 () -> -controller.getLeftX(),
                 () -> -controller.getRightX()));
+
+    controller
+        .rightBumper()
+        .whileTrue(
+            DriveCommands.joystickDrive(
+                drive,
+                () -> -controller.getLeftY() * 0.8,
+                () -> -controller.getLeftX() * 0.8,
+                () -> -controller.getRightX() * 0.8));
   }
 
   /**
