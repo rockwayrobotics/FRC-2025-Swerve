@@ -96,6 +96,7 @@ public class ModuleIOSpark implements ModuleIO {
     driveEncoder = driveSpark.getEncoder();
     // turnEncoder = turnSpark.getAbsoluteEncoder();
     turnEncoder = new ThriftyEncoder(module % 4);
+    turnEncoder.setPositionOffset(zeroRotation.getRadians());
     driveController = driveSpark.getClosedLoopController();
     turnController = turnSpark.getClosedLoopController();
 
@@ -186,23 +187,29 @@ public class ModuleIOSpark implements ModuleIO {
         .smartCurrentLimit(turnMotorCurrentLimit)
         .voltageCompensation(12.0);
     turnConfig
-        .absoluteEncoder
-        .inverted(turnEncoderInverted)
-        .positionConversionFactor(turnEncoderPositionFactor)
-        .velocityConversionFactor(turnEncoderVelocityFactor)
-        .averageDepth(2);
+        .encoder
+        .positionConversionFactor(turnEncoderPositionFactor / turnGearRatio)
+        .velocityConversionFactor(turnEncoderVelocityFactor / turnGearRatio)
+        // .uvwMeasurementPeriod(10)
+        .uvwAverageDepth(2);
+    // .averageDepth(2);
     turnConfig
         .closedLoop
-        .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
+        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .positionWrappingEnabled(true)
         .positionWrappingInputRange(turnPIDMinInput, turnPIDMaxInput)
+        .outputRange(-.5, .5) // FIXME: REMOVE THIS LATER
         .pidf(turnKp, 0.0, turnKd, 0.0);
     turnConfig
         .signals
-        .absoluteEncoderPositionAlwaysOn(true)
-        .absoluteEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))
-        .absoluteEncoderVelocityAlwaysOn(true)
-        .absoluteEncoderVelocityPeriodMs(20)
+        .primaryEncoderPositionAlwaysOn(true)
+        .primaryEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))
+        .primaryEncoderVelocityAlwaysOn(true)
+        .primaryEncoderVelocityPeriodMs(20)
+        // .absoluteEncoderPositionAlwaysOn(true)
+        // .absoluteEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))
+        // .absoluteEncoderVelocityAlwaysOn(true)
+        // .absoluteEncoderVelocityPeriodMs(20)
         .appliedOutputPeriodMs(20)
         .busVoltagePeriodMs(20)
         .outputCurrentPeriodMs(20);
@@ -218,7 +225,11 @@ public class ModuleIOSpark implements ModuleIO {
     drivePositionQueue =
         SparkOdometryThread.getInstance().registerSignal(driveSpark, driveEncoder::getPosition);
     turnPositionQueue =
-        SparkOdometryThread.getInstance().registerSignal(turnSpark, turnEncoder::getPosition);
+        SparkOdometryThread.getInstance()
+            .registerSignal(turnSpark, turnEncoder::getVirtualPosition);
+
+    turnSpark.getEncoder().setPosition(turnEncoder.getVirtualPosition());
+    System.out.println("Set encoder " + module + ", " + turnEncoder.getVirtualPosition());
   }
 
   @Override
@@ -238,10 +249,16 @@ public class ModuleIOSpark implements ModuleIO {
     sparkStickyFault = false;
     ifOk(
         turnSpark,
-        turnEncoder::getPosition,
-        (value) -> inputs.turnPosition = new Rotation2d(value).minus(zeroRotation));
-    // FIXME: ifOk(turnSpark, turnEncoder::getVelocity, (value) -> inputs.turnVelocityRadPerSec =
-    // value);
+        turnEncoder::getVirtualPosition,
+        (value) -> inputs.turnPosition = new Rotation2d(value));
+    ifOk(
+        turnSpark,
+        () -> turnSpark.getEncoder().getPosition(),
+        (value) -> inputs.turnRelativePosition = new Rotation2d(value));
+    ifOk(
+        turnSpark,
+        () -> turnSpark.getEncoder().getVelocity(),
+        (value) -> inputs.turnVelocityRadPerSec = value);
     ifOk(
         turnSpark,
         new DoubleSupplier[] {turnSpark::getAppliedOutput, turnSpark::getBusVoltage},
@@ -256,7 +273,7 @@ public class ModuleIOSpark implements ModuleIO {
         drivePositionQueue.stream().mapToDouble((Double value) -> value).toArray();
     inputs.odometryTurnPositions =
         turnPositionQueue.stream()
-            .map((Double value) -> new Rotation2d(value).minus(zeroRotation))
+            .map((Double value) -> new Rotation2d(value))
             .toArray(Rotation2d[]::new);
     timestampQueue.clear();
     drivePositionQueue.clear();
@@ -287,8 +304,7 @@ public class ModuleIOSpark implements ModuleIO {
   @Override
   public void setTurnPosition(Rotation2d rotation) {
     double setpoint =
-        MathUtil.inputModulus(
-            rotation.plus(zeroRotation).getRadians(), turnPIDMinInput, turnPIDMaxInput);
+        MathUtil.inputModulus(rotation.getRadians(), turnPIDMinInput, turnPIDMaxInput);
     turnController.setReference(setpoint, ControlType.kPosition);
   }
 }
