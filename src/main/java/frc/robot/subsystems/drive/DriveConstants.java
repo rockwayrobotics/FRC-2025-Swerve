@@ -21,17 +21,17 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 
 public class DriveConstants {
-  public static final double maxSpeedMetersPerSec = 4.8; // 4.8
+  public static final double maxSpeedMetersPerSec = 0.4; // 4.8
   public static final double odometryFrequency = 100.0; // Hz
   public static final double trackWidth = Units.inchesToMeters(21.75);
   public static final double wheelBase = Units.inchesToMeters(21.75);
   public static final double driveBaseRadius = Math.hypot(trackWidth / 2.0, wheelBase / 2.0);
   public static final Translation2d[] moduleTranslations =
       new Translation2d[] {
-        new Translation2d(trackWidth / 2.0, wheelBase / 2.0),
-        new Translation2d(trackWidth / 2.0, -wheelBase / 2.0),
-        new Translation2d(-trackWidth / 2.0, wheelBase / 2.0),
-        new Translation2d(-trackWidth / 2.0, -wheelBase / 2.0)
+        new Translation2d(trackWidth / 2.0, -wheelBase / 2.0), // 0 (4)
+        new Translation2d(trackWidth / 2.0, wheelBase / 2.0), // 1
+        new Translation2d(-trackWidth / 2.0, wheelBase / 2.0), // 2
+        new Translation2d(-trackWidth / 2.0, -wheelBase / 2.0) // 3
       };
 
   // Zeroed rotation values for each module, see setup instructions
@@ -82,7 +82,7 @@ public class DriveConstants {
   public static final double driveSimKv = 0.0789;
 
   // Turn motor configuration
-  public static final boolean turnInverted = true;
+  public static final boolean turnInverted = false;
   public static final int turnMotorCurrentLimit = 20;
   public static final double turnMotorReduction = 150 / 7; // Mk4i turn reduction
   public static final DCMotor turnGearbox = DCMotor.getNeo550(1);
@@ -93,7 +93,7 @@ public class DriveConstants {
   public static final double turnEncoderVelocityFactor = (2 * Math.PI) / 60.0; // RPM -> Rad/Sec
 
   // Turn PID configuration
-  public static final double turnKp = 2.0;
+  public static final double turnKp = 1.5; // 2.0
   public static final double turnKd = 0.0;
   public static final double turnSimP = 8.0;
   public static final double turnSimD = 0.0;

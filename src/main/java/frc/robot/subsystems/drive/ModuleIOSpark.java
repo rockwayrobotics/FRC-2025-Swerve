@@ -37,6 +37,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.sensors.ThriftyEncoder;
 import java.util.Queue;
 import java.util.function.DoubleSupplier;
+import org.littletonrobotics.junction.Logger;
 
 /**
  * Module IO implementation for Spark Flex drive motor controller, Spark Max turn motor controller,
@@ -44,6 +45,7 @@ import java.util.function.DoubleSupplier;
  */
 public class ModuleIOSpark implements ModuleIO {
   private final Rotation2d zeroRotation;
+  private final int moduleId;
 
   // Hardware objects
   private final SparkBase driveSpark;
@@ -65,6 +67,7 @@ public class ModuleIOSpark implements ModuleIO {
   private final Debouncer turnConnectedDebounce = new Debouncer(0.5);
 
   public ModuleIOSpark(int module) {
+    this.moduleId = module;
     zeroRotation =
         switch (module) {
           case 0 -> backRightZeroRotation;
@@ -96,7 +99,8 @@ public class ModuleIOSpark implements ModuleIO {
     driveEncoder = driveSpark.getEncoder();
     // turnEncoder = turnSpark.getAbsoluteEncoder();
     turnEncoder = new ThriftyEncoder(module % 4);
-    turnEncoder.setPositionOffset(zeroRotation.getRadians());
+    turnEncoder.setInverted(true);
+    turnEncoder.setPositionOffset(-zeroRotation.getRadians());
     driveController = driveSpark.getClosedLoopController();
     turnController = turnSpark.getClosedLoopController();
 
@@ -305,6 +309,7 @@ public class ModuleIOSpark implements ModuleIO {
   public void setTurnPosition(Rotation2d rotation) {
     double setpoint =
         MathUtil.inputModulus(rotation.getRadians(), turnPIDMinInput, turnPIDMaxInput);
+    Logger.recordOutput("/Drive/TurnSetpoint" + this.moduleId, setpoint);
     turnController.setReference(setpoint, ControlType.kPosition);
   }
 }

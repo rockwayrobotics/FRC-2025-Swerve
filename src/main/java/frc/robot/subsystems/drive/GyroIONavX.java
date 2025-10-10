@@ -19,11 +19,17 @@ import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
+// import edu.wpi.first.wpilibj.SPI.Port;
+// import frc.robot.NavX.AHRS;
 import java.util.Queue;
 
 /** IO implementation for NavX. */
 public class GyroIONavX implements GyroIO {
+  // private final AHRS navX =
+  //     new AHRS(Port.kMXP, /* NavXComType.kMXP_SPI,  */ (byte) odometryFrequency);
   private final AHRS navX = new AHRS(NavXComType.kMXP_SPI, (byte) odometryFrequency);
+  private boolean initialYawSet = false;
+  private double initialYaw = 0;
   private final Queue<Double> yawPositionQueue;
   private final Queue<Double> yawTimestampQueue;
 
@@ -35,7 +41,11 @@ public class GyroIONavX implements GyroIO {
   @Override
   public void updateInputs(GyroIOInputs inputs) {
     inputs.connected = navX.isConnected();
-    inputs.yawPosition = Rotation2d.fromDegrees(-navX.getAngle());
+    if (!initialYawSet && inputs.connected) {
+      initialYaw = -navX.getAngle();
+      initialYawSet = true;
+    }
+    inputs.yawPosition = Rotation2d.fromDegrees(-navX.getAngle() - initialYaw);
     inputs.yawVelocityRadPerSec = Units.degreesToRadians(-navX.getRawGyroZ());
 
     inputs.odometryYawTimestamps =
@@ -46,5 +56,15 @@ public class GyroIONavX implements GyroIO {
             .toArray(Rotation2d[]::new);
     yawTimestampQueue.clear();
     yawPositionQueue.clear();
+  }
+
+  public void zeroGyro() {
+    navX.zeroYaw();
+    initialYaw = 0;
+    initialYawSet = true;
+  }
+
+  public double getAngle() {
+    return navX.getAngle();
   }
 }
