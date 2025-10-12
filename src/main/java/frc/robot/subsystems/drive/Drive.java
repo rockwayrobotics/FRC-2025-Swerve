@@ -250,7 +250,6 @@ public class Drive extends SubsystemBase {
    * @param speeds Speeds in meters/sec
    */
   public void runVelocity(ChassisSpeeds speeds) {
-    System.out.println(speeds.vxMetersPerSecond);
     // ChatGPT suggestion for how to slow the robot down (for safe practice in a
     // smaller space)
     double translationalScale = RobotState.isAutonomous() ? 1 : 1; // Was 0.07
