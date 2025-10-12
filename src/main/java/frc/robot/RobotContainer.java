@@ -28,7 +28,7 @@ import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
-import frc.robot.subsystems.drive.ModuleIOSim;
+import frc.robot.subsystems.drive.ModuleIORealSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -67,10 +67,10 @@ public class RobotContainer {
         drive =
             new Drive(
                 new GyroIO() {},
-                new ModuleIOSim(),
-                new ModuleIOSim(),
-                new ModuleIOSim(),
-                new ModuleIOSim());
+                new ModuleIORealSim(0), // new ModuleIOSim(),
+                new ModuleIORealSim(1), // new ModuleIOSim(),
+                new ModuleIORealSim(2), // new ModuleIOSim(),
+                new ModuleIORealSim(3)); // new ModuleIOSim());
         break;
 
       default:

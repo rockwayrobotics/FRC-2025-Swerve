@@ -64,7 +64,7 @@ public class DriveConstants {
   public static final double driveMotorReduction =
       50 * 17 * 45 / 14 / 27 / 15; // L2 gearing for SDS Mk4i
   // (45.0 * 22.0) / (14.0 * 15.0); // MAXSwerve with 14 pinion teeth and 22 spur teeth
-  public static final DCMotor driveGearbox = DCMotor.getNEO(1);
+  public static final DCMotor driveGearbox = DCMotor.getNeoVortex(1);
 
   // Drive encoder configuration
   public static final double driveEncoderPositionFactor =
@@ -85,7 +85,7 @@ public class DriveConstants {
   // Turn motor configuration
   public static final int turnMotorCurrentLimit = 20;
   public static final double turnMotorReduction = 150 / 7; // Mk4i turn reduction
-  public static final DCMotor turnGearbox = DCMotor.getNeo550(1);
+  public static final DCMotor turnGearbox = DCMotor.getNEO(1);
 
   // Turn encoder configuration
   public static final double turnGearRatio = 150.0 / 7;
@@ -93,7 +93,7 @@ public class DriveConstants {
   public static final double turnEncoderVelocityFactor = (2 * Math.PI) / 60.0; // RPM -> Rad/Sec
 
   // Turn PID configuration
-  public static final double turnKp = 1.5; // 2.0
+  public static final double turnKp = 0.1; // 1.5; // 2.0
   public static final double turnKd = 0.0;
   public static final double turnSimP = 8.0;
   public static final double turnSimD = 0.0;
