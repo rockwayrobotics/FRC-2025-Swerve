@@ -19,6 +19,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import lombok.Builder;
 
 public class DriveConstants {
   public static final double maxSpeedMetersPerSec = 0.4; // 4.8
@@ -28,10 +29,10 @@ public class DriveConstants {
   public static final double driveBaseRadius = Math.hypot(trackWidth / 2.0, wheelBase / 2.0);
   public static final Translation2d[] moduleTranslations =
       new Translation2d[] {
-        new Translation2d(trackWidth / 2.0, -wheelBase / 2.0), // 0 (4)
-        new Translation2d(trackWidth / 2.0, wheelBase / 2.0), // 1
-        new Translation2d(-trackWidth / 2.0, wheelBase / 2.0), // 2
-        new Translation2d(-trackWidth / 2.0, -wheelBase / 2.0) // 3
+        new Translation2d(trackWidth / 2.0, wheelBase / 2.0), // fl 2
+        new Translation2d(trackWidth / 2.0, -wheelBase / 2.0), // fr 3
+        new Translation2d(-trackWidth / 2.0, wheelBase / 2.0), // bl  1
+        new Translation2d(-trackWidth / 2.0, -wheelBase / 2.0) // br  4(0)
       };
 
   // Zeroed rotation values for each module, see setup instructions
@@ -82,7 +83,6 @@ public class DriveConstants {
   public static final double driveSimKv = 0.0789;
 
   // Turn motor configuration
-  public static final boolean turnInverted = false;
   public static final int turnMotorCurrentLimit = 20;
   public static final double turnMotorReduction = 150 / 7; // Mk4i turn reduction
   public static final DCMotor turnGearbox = DCMotor.getNeo550(1);
@@ -116,4 +116,91 @@ public class DriveConstants {
               driveMotorCurrentLimit,
               1),
           moduleTranslations);
+
+  public static final SwerveModuleConfig[] swerveModuleConfigsComp = {
+    // FL
+    SwerveModuleConfig.builder()
+        .driveMotorId(16)
+        .turnMotorId(15)
+        .encoderChannel(41)
+        .encoderOffset(Rotation2d.fromRadians(2.5356702423749646))
+        .turnInverted(true)
+        .encoderInverted(false)
+        .build(),
+    // FR
+    SwerveModuleConfig.builder()
+        .driveMotorId(10)
+        .turnMotorId(11)
+        .encoderChannel(42)
+        .encoderOffset(Rotation2d.fromRadians(-2.932971266437346))
+        .turnInverted(true)
+        .encoderInverted(false)
+        .build(),
+    // BL
+    SwerveModuleConfig.builder()
+        .driveMotorId(18)
+        .turnMotorId(19)
+        .encoderChannel(43)
+        .encoderOffset(Rotation2d.fromRadians(0.6458059116998549))
+        .turnInverted(true)
+        .encoderInverted(false)
+        .build(),
+    // BR
+    SwerveModuleConfig.builder()
+        .driveMotorId(13)
+        .turnMotorId(14)
+        .encoderChannel(44)
+        .encoderOffset(Rotation2d.fromRadians(-2.5187964537082226))
+        .turnInverted(true)
+        .encoderInverted(false)
+        .build()
+  };
+
+  public static final SwerveModuleConfig[] swerveModuleConfigsDev = {
+    // FL
+    SwerveModuleConfig.builder()
+        .driveMotorId(2)
+        .turnMotorId(6)
+        .encoderChannel(2)
+        .encoderOffset(Rotation2d.fromRadians(1.5738810535337175))
+        .turnInverted(true)
+        .encoderInverted(false)
+        .build(),
+    // FR
+    SwerveModuleConfig.builder()
+        .driveMotorId(3)
+        .turnMotorId(7)
+        .encoderChannel(3)
+        .encoderOffset(Rotation2d.fromRadians(0.6287))
+        .turnInverted(true)
+        .encoderInverted(false)
+        .build(),
+    // BL
+    SwerveModuleConfig.builder()
+        .driveMotorId(9)
+        .turnMotorId(5)
+        .encoderChannel(1)
+        .encoderOffset(Rotation2d.fromRadians(2.8597))
+        .turnInverted(true)
+        .encoderInverted(false)
+        .build(),
+    // BR
+    SwerveModuleConfig.builder()
+        .driveMotorId(4)
+        .turnMotorId(8)
+        .encoderChannel(0)
+        .encoderOffset(Rotation2d.fromRadians(0.9242711647597668))
+        .turnInverted(true)
+        .encoderInverted(false)
+        .build()
+  };
+
+  @Builder
+  public record SwerveModuleConfig(
+      int driveMotorId,
+      int turnMotorId,
+      int encoderChannel,
+      Rotation2d encoderOffset,
+      boolean turnInverted,
+      boolean encoderInverted) {}
 }
