@@ -153,11 +153,11 @@ public class RobotContainer {
     controller
         .y()
         .whileTrue(
-            DriveCommands.joystickAim(
+            DriveCommands.joystickDriveToPose(
                 drive,
                 () -> -controller.getLeftY(),
                 () -> -controller.getLeftX(),
-                () -> -controller.getRightX()));
+                () -> new Pose2d(14.18, 5.86, Rotation2d.fromDegrees(-36.77))));
 
     controller
         .rightBumper()

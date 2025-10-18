@@ -13,8 +13,12 @@
 
 package frc.robot.commands;
 
-import static edu.wpi.first.units.Units.Radians;
-
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.IdealStartingState;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.Waypoint;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
@@ -25,7 +29,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
@@ -39,6 +42,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
@@ -167,7 +171,6 @@ public class DriveCommands {
       Drive drive,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
-      Supplier<Rotation2d> rotationSupplier,
       Supplier<Pose2d> poseSupplier) {
 
     // Create PID controller
@@ -179,48 +182,27 @@ public class DriveCommands {
             new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
     angleController.enableContinuousInput(-Math.PI, Math.PI);
 
-    // Construct command
-    return Commands.run(
-            () -> {
-              Pose2d targetPose = poseSupplier.get();
+    return Commands.defer(
+        () -> {
+          System.out.println("Running defer");
+          angleController.reset(drive.getRotation().getRadians());
+          Pose2d startingPose = drive.getPose();
+          Pose2d targetPose = poseSupplier.get();
+          List<Waypoint> waypoints =
+              List.of(
+                  new Waypoint(null, startingPose.getTranslation(), targetPose.getTranslation()),
+                  new Waypoint(startingPose.getTranslation(), targetPose.getTranslation(), null));
 
-              Transform2d targetTransform = drive.getPose().minus(targetPose);
-              System.out.println(targetTransform);
-              Translation2d targetTranslation = targetTransform.getTranslation();
-              Rotation2d targetRotation =
-                  new Rotation2d(
-                      Angle.ofBaseUnits(
-                          Math.atan2(targetTranslation.getY(), targetTranslation.getX()), Radians));
-              // Get linear velocity
-              Translation2d linearVelocity =
-                  getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
-
-              // Calculate angular speed
-              double omega =
-                  angleController.calculate(
-                      drive.getRotation().getRadians(), targetRotation.getRadians());
-
-              // Convert to field relative speeds & send command
-              ChassisSpeeds speeds =
-                  new ChassisSpeeds(
-                      linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
-                      linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
-                      omega);
-              boolean isFlipped =
-                  DriverStation.getAlliance().isPresent()
-                      && DriverStation.getAlliance().get() == Alliance.Red;
-              drive.runVelocity(
-                  ChassisSpeeds.fromFieldRelativeSpeeds(
-                      speeds,
-                      isFlipped
-                          ? drive.getRotation().plus(new Rotation2d(Math.PI))
-                          : drive.getRotation()));
-              System.out.println(drive.getPose());
-            },
-            drive)
-
-        // Reset PID controller when command starts
-        .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
+          PathConstraints constraints = new PathConstraints(0.5, 0.5, 540, 720, 12, false);
+          IdealStartingState startingState = new IdealStartingState(0, startingPose.getRotation());
+          GoalEndState endState = new GoalEndState(0, Rotation2d.fromDegrees(-30));
+          PathPlannerPath path =
+              new PathPlannerPath(waypoints, constraints, startingState, endState);
+          return AutoBuilder.followPath(path)
+              .beforeStarting(() -> System.out.println("Before follow path"))
+              .andThen(() -> System.out.println("AndThen"));
+        },
+        Set.of(drive));
   }
 
   public static Command joystickAim(
