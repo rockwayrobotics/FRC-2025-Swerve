@@ -182,9 +182,9 @@ public class Drive extends SubsystemBase {
       poseEstimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
     }
 
-    boolean useMegaTag2 = false; // set to false to use MegaTag1
+    boolean useMegaTag2 = true; // set to false to use MegaTag1
     boolean doRejectUpdate = false;
-    if (useMegaTag2 == false) {
+    if (!useMegaTag2) {
       LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_basement("limelight");
       if (mt1 != null) {
         for (var fid : mt1.rawFiducials) {
@@ -214,7 +214,7 @@ public class Drive extends SubsystemBase {
           // poseEstimator.addVisionMeasurement(mt1.pose, mt1.timestampSeconds);
         }
       }
-    } else if (useMegaTag2 == true) {
+    } else {
       LimelightHelpers.SetRobotOrientation(
           "limelight",
           poseEstimator.getEstimatedPosition().getRotation().getDegrees(),
@@ -232,7 +232,7 @@ public class Drive extends SubsystemBase {
       {
         doRejectUpdate = true;
       }
-      if (mt2.tagCount == 0) {
+      if (mt2 == null || mt2.tagCount == 0) {
         doRejectUpdate = true;
       }
       if (!doRejectUpdate) {
@@ -250,7 +250,6 @@ public class Drive extends SubsystemBase {
    * @param speeds Speeds in meters/sec
    */
   public void runVelocity(ChassisSpeeds speeds) {
-    System.out.println(speeds.vxMetersPerSecond);
     // ChatGPT suggestion for how to slow the robot down (for safe practice in a
     // smaller space)
     double translationalScale = RobotState.isAutonomous() ? 1 : 1; // Was 0.07

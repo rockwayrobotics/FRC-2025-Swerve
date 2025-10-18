@@ -174,7 +174,6 @@ public class ModuleIOSpark implements ModuleIO {
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .positionWrappingEnabled(true)
         .positionWrappingInputRange(turnPIDMinInput, turnPIDMaxInput)
-        .outputRange(-.5, .5) // FIXME: REMOVE THIS LATER
         .pidf(turnKp, 0.0, turnKd, 0.0);
     turnConfig
         .signals
