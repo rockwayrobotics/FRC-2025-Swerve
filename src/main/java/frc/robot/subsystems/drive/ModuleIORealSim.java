@@ -1,11 +1,5 @@
 package frc.robot.subsystems.drive;
 
-import static frc.robot.subsystems.drive.DriveConstants.backLeftDriveCanId;
-import static frc.robot.subsystems.drive.DriveConstants.backLeftTurnCanId;
-import static frc.robot.subsystems.drive.DriveConstants.backLeftZeroRotation;
-import static frc.robot.subsystems.drive.DriveConstants.backRightDriveCanId;
-import static frc.robot.subsystems.drive.DriveConstants.backRightTurnCanId;
-import static frc.robot.subsystems.drive.DriveConstants.backRightZeroRotation;
 import static frc.robot.subsystems.drive.DriveConstants.driveEncoderPositionFactor;
 import static frc.robot.subsystems.drive.DriveConstants.driveEncoderVelocityFactor;
 import static frc.robot.subsystems.drive.DriveConstants.driveGearbox;
@@ -15,18 +9,11 @@ import static frc.robot.subsystems.drive.DriveConstants.driveKs;
 import static frc.robot.subsystems.drive.DriveConstants.driveKv;
 import static frc.robot.subsystems.drive.DriveConstants.driveMotorCurrentLimit;
 import static frc.robot.subsystems.drive.DriveConstants.driveMotorReduction;
-import static frc.robot.subsystems.drive.DriveConstants.frontLeftDriveCanId;
-import static frc.robot.subsystems.drive.DriveConstants.frontLeftTurnCanId;
-import static frc.robot.subsystems.drive.DriveConstants.frontLeftZeroRotation;
-import static frc.robot.subsystems.drive.DriveConstants.frontRightDriveCanId;
-import static frc.robot.subsystems.drive.DriveConstants.frontRightTurnCanId;
-import static frc.robot.subsystems.drive.DriveConstants.frontRightZeroRotation;
 import static frc.robot.subsystems.drive.DriveConstants.odometryFrequency;
 import static frc.robot.subsystems.drive.DriveConstants.turnEncoderPositionFactor;
 import static frc.robot.subsystems.drive.DriveConstants.turnEncoderVelocityFactor;
 import static frc.robot.subsystems.drive.DriveConstants.turnGearRatio;
 import static frc.robot.subsystems.drive.DriveConstants.turnGearbox;
-import static frc.robot.subsystems.drive.DriveConstants.turnInverted;
 import static frc.robot.subsystems.drive.DriveConstants.turnKd;
 import static frc.robot.subsystems.drive.DriveConstants.turnKp;
 import static frc.robot.subsystems.drive.DriveConstants.turnMotorCurrentLimit;
@@ -64,14 +51,11 @@ import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import frc.robot.sensors.ThriftyEncoder;
+import frc.robot.subsystems.drive.DriveConstants.SwerveModuleConfig;
 import java.util.Queue;
 import java.util.function.DoubleSupplier;
-import org.littletonrobotics.junction.Logger;
 
 public class ModuleIORealSim implements ModuleIO {
-  private final Rotation2d zeroRotation;
-  private final int moduleId;
-
   // Hardware objects
   private final SparkFlex driveSpark;
   private final SparkMax turnSpark;
@@ -97,8 +81,7 @@ public class ModuleIORealSim implements ModuleIO {
   private final Debouncer driveConnectedDebounce = new Debouncer(0.5);
   private final Debouncer turnConnectedDebounce = new Debouncer(0.5);
 
-  public ModuleIORealSim(int module) {
-    this.moduleId = module;
+  public ModuleIORealSim(SwerveModuleConfig moduleConfig) {
     driveSim =
         new DCMotorSim(
             LinearSystemId.createDCMotorSystem(driveGearbox, 0.025, driveMotorReduction),
@@ -108,40 +91,15 @@ public class ModuleIORealSim implements ModuleIO {
             LinearSystemId.createDCMotorSystem(turnGearbox, 0.004, turnMotorReduction),
             turnGearbox);
 
-    zeroRotation =
-        switch (module) {
-          case 0 -> backRightZeroRotation;
-          case 1 -> backLeftZeroRotation;
-          case 2 -> frontLeftZeroRotation;
-          case 3 -> frontRightZeroRotation;
-          default -> new Rotation2d();
-        };
-    driveSpark =
-        new SparkFlex(
-            switch (module) {
-              case 0 -> backRightDriveCanId;
-              case 1 -> backLeftDriveCanId;
-              case 2 -> frontLeftDriveCanId;
-              case 3 -> frontRightDriveCanId;
-              default -> 0;
-            },
-            MotorType.kBrushless);
+    Rotation2d zeroRotation = moduleConfig.encoderOffset();
+    driveSpark = new SparkFlex(moduleConfig.driveMotorId(), MotorType.kBrushless);
     driveSparkSim = new SparkFlexSim(driveSpark, DCMotor.getNeoVortex(1));
-    turnSpark =
-        new SparkMax(
-            switch (module) {
-              case 0 -> backRightTurnCanId;
-              case 1 -> backLeftTurnCanId;
-              case 2 -> frontLeftTurnCanId;
-              case 3 -> frontRightTurnCanId;
-              default -> 0;
-            },
-            MotorType.kBrushless);
+    turnSpark = new SparkMax(moduleConfig.turnMotorId(), MotorType.kBrushless);
     turnSparkSim = new SparkMaxSim(turnSpark, DCMotor.getNEO(1));
     driveEncoder = driveSpark.getEncoder();
-    turnEncoder = new ThriftyEncoder(module % 4);
-    turnEncoder.setInverted(true);
-    turnEncoder.setPositionOffset(0); // -zeroRotation.getRadians());
+    turnEncoder = new ThriftyEncoder(moduleConfig.encoderChannel());
+    turnEncoder.setInverted(moduleConfig.encoderInverted());
+    turnEncoder.setPositionOffset(0); // Should be -zeroRotation.getRadians() but simulator...
     driveController = driveSpark.getClosedLoopController();
     turnController = turnSpark.getClosedLoopController();
 
@@ -187,7 +145,7 @@ public class ModuleIORealSim implements ModuleIO {
     // Configure turn motor
     var turnConfig = new SparkMaxConfig();
     turnConfig
-        .inverted(turnInverted)
+        .inverted(moduleConfig.turnInverted())
         .idleMode(IdleMode.kBrake)
         .smartCurrentLimit(turnMotorCurrentLimit)
         .voltageCompensation(12.0);
@@ -234,7 +192,8 @@ public class ModuleIORealSim implements ModuleIO {
             .registerSignal(turnSpark, turnEncoder::getVirtualPosition);
 
     turnSpark.getEncoder().setPosition(turnEncoder.getVirtualPosition());
-    System.out.println("Set encoder " + module + ", " + turnEncoder.getVirtualPosition());
+    System.out.println(
+        "Set encoder " + moduleConfig.encoderChannel() + ", " + turnEncoder.getVirtualPosition());
   }
 
   @Override
@@ -257,11 +216,11 @@ public class ModuleIORealSim implements ModuleIO {
     ifOk(
         turnSpark,
         turnEncoder::getVirtualPosition,
-        (value) -> inputs.turnPosition = new Rotation2d(value));
+        (value) -> inputs.turnRelativePosition = new Rotation2d(value));
     ifOk(
         turnSpark,
         () -> turnSpark.getEncoder().getPosition(),
-        (value) -> inputs.turnRelativePosition = new Rotation2d(value));
+        (value) -> inputs.turnPosition = new Rotation2d(value));
     ifOk(
         turnSpark,
         () -> turnSpark.getEncoder().getVelocity(),
@@ -308,11 +267,6 @@ public class ModuleIORealSim implements ModuleIO {
     turnAngleRad = MathUtil.inputModulus(turnAngleRad, 0, 2 * Math.PI);
     turnSparkSim.setPosition(turnAngleRad);
 
-    System.out.printf(
-        "turnPos=%.3f rad, turnApplied=%.2fV%n",
-        turnSparkSim.getPosition(),
-        turnSparkSim.getAppliedOutput() * RobotController.getBatteryVoltage());
-
     RoboRioSim.setVInVoltage(
         BatterySim.calculateDefaultBatteryLoadedVoltage(
             driveSim.getCurrentDrawAmps() + turnSim.getCurrentDrawAmps()));
@@ -343,7 +297,6 @@ public class ModuleIORealSim implements ModuleIO {
   public void setTurnPosition(Rotation2d rotation) {
     double setpoint =
         MathUtil.inputModulus(rotation.getRadians(), turnPIDMinInput, turnPIDMaxInput);
-    Logger.recordOutput("/Drive/TurnSetpoint" + this.moduleId, setpoint);
     turnController.setReference(setpoint, ControlType.kPosition);
   }
 }

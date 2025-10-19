@@ -189,10 +189,7 @@ public class DriveCommands {
           Pose2d startingPose = drive.getPose();
           Pose2d targetPose = poseSupplier.get();
           List<Waypoint> waypoints =
-              List.of(
-                  new Waypoint(null, startingPose.getTranslation(), targetPose.getTranslation()),
-                  new Waypoint(startingPose.getTranslation(), targetPose.getTranslation(), null));
-
+              PathPlannerPath.waypointsFromPoses(List.of(startingPose, targetPose));
           PathConstraints constraints = new PathConstraints(0.5, 0.5, 540, 720, 12, false);
           IdealStartingState startingState = new IdealStartingState(0, startingPose.getRotation());
           GoalEndState endState = new GoalEndState(0, Rotation2d.fromDegrees(-30));

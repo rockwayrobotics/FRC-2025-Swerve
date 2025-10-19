@@ -22,7 +22,7 @@ import edu.wpi.first.math.util.Units;
 import lombok.Builder;
 
 public class DriveConstants {
-  public static final double maxSpeedMetersPerSec = 0.4; // 4.8
+  public static final double maxSpeedMetersPerSec = 4.8; // 4.8
   public static final double odometryFrequency = 100.0; // Hz
   public static final double trackWidth = Units.inchesToMeters(21.75);
   public static final double wheelBase = Units.inchesToMeters(21.75);
@@ -37,26 +37,26 @@ public class DriveConstants {
 
   // Zeroed rotation values for each module, see setup instructions
   // -1.5278256220066364
-  public static final Rotation2d frontLeftZeroRotation = new Rotation2d(-1.5738810535337175);
+  private static final Rotation2d frontLeftZeroRotation = new Rotation2d(-1.5738810535337175);
   // -0.636869570422864
-  public static final Rotation2d frontRightZeroRotation = new Rotation2d(-0.6287);
+  private static final Rotation2d frontRightZeroRotation = new Rotation2d(-0.6287);
   // -2.8583664243244753
-  public static final Rotation2d backLeftZeroRotation = new Rotation2d(-2.8597);
+  private static final Rotation2d backLeftZeroRotation = new Rotation2d(-2.8597);
   // -0.9598169754031147
-  public static final Rotation2d backRightZeroRotation = new Rotation2d(-0.9242711647597668);
+  private static final Rotation2d backRightZeroRotation = new Rotation2d(-0.9242711647597668);
 
   // Device CAN IDs
   public static final int pigeonCanId = 10;
 
-  public static final int frontLeftDriveCanId = 2;
-  public static final int backLeftDriveCanId = 9;
-  public static final int frontRightDriveCanId = 3;
-  public static final int backRightDriveCanId = 4;
+  private static final int frontLeftDriveCanId = 2;
+  private static final int backLeftDriveCanId = 9;
+  private static final int frontRightDriveCanId = 3;
+  private static final int backRightDriveCanId = 4;
 
-  public static final int frontLeftTurnCanId = 6;
-  public static final int backLeftTurnCanId = 5;
-  public static final int frontRightTurnCanId = 7;
-  public static final int backRightTurnCanId = 8;
+  private static final int frontLeftTurnCanId = 6;
+  private static final int backLeftTurnCanId = 5;
+  private static final int frontRightTurnCanId = 7;
+  private static final int backRightTurnCanId = 8;
 
   // Drive motor configuration
   public static final int driveMotorCurrentLimit = 50;
@@ -93,7 +93,7 @@ public class DriveConstants {
   public static final double turnEncoderVelocityFactor = (2 * Math.PI) / 60.0; // RPM -> Rad/Sec
 
   // Turn PID configuration
-  public static final double turnKp = 0.1; // 1.5; // 2.0
+  public static final double turnKp = 1.5; // 2.0
   public static final double turnKd = 0.0;
   public static final double turnSimP = 8.0;
   public static final double turnSimD = 0.0;

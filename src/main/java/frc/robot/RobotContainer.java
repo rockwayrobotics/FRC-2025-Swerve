@@ -29,6 +29,7 @@ import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIORealSim;
+import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -64,13 +65,24 @@ public class RobotContainer {
 
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
-        drive =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIORealSim(0), // new ModuleIOSim(),
-                new ModuleIORealSim(1), // new ModuleIOSim(),
-                new ModuleIORealSim(2), // new ModuleIOSim(),
-                new ModuleIORealSim(3)); // new ModuleIOSim());
+        if (true) {
+          drive =
+              new Drive(
+                  new GyroIO() {},
+                  new ModuleIOSim(),
+                  new ModuleIOSim(),
+                  new ModuleIOSim(),
+                  new ModuleIOSim());
+        } else {
+
+          drive =
+              new Drive(
+                  new GyroIO() {},
+                  new ModuleIORealSim(DriveConstants.swerveModuleConfigsDev[0]),
+                  new ModuleIORealSim(DriveConstants.swerveModuleConfigsDev[1]),
+                  new ModuleIORealSim(DriveConstants.swerveModuleConfigsDev[2]),
+                  new ModuleIORealSim(DriveConstants.swerveModuleConfigsDev[3]));
+        }
         break;
 
       default:
