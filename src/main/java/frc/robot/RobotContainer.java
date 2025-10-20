@@ -31,6 +31,7 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIORealSim;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.robot.subsystems.vision.VisionSimulator;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -42,12 +43,16 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   private final Drive drive;
+  private VisionSimulator visionSimulator = null;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
+
+  // Experimental simulation meant to be more "real"
+  private final boolean experimentalSim = false;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -65,7 +70,8 @@ public class RobotContainer {
 
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
-        if (true) {
+        visionSimulator = new VisionSimulator();
+        if (!experimentalSim) {
           drive =
               new Drive(
                   new GyroIO() {},
@@ -74,7 +80,6 @@ public class RobotContainer {
                   new ModuleIOSim(),
                   new ModuleIOSim());
         } else {
-
           drive =
               new Drive(
                   new GyroIO() {},
@@ -188,5 +193,11 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return autoChooser.get();
+  }
+
+  public void simulationPeriodic() {
+    if (visionSimulator != null) {
+      visionSimulator.update(drive.getPose());
+    }
   }
 }

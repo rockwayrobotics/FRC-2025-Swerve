@@ -184,10 +184,11 @@ public class DriveCommands {
 
     return Commands.defer(
         () -> {
-          System.out.println("Running defer");
           angleController.reset(drive.getRotation().getRadians());
           Pose2d startingPose = drive.getPose();
           Pose2d targetPose = poseSupplier.get();
+          System.out.println(
+              "Running defer with start: " + startingPose + " and target: " + targetPose);
           List<Waypoint> waypoints =
               PathPlannerPath.waypointsFromPoses(List.of(startingPose, targetPose));
           PathConstraints constraints = new PathConstraints(0.5, 0.5, 540, 720, 12, false);
