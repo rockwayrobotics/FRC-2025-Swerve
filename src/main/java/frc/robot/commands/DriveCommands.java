@@ -13,6 +13,9 @@
 
 package frc.robot.commands;
 
+import static edu.wpi.first.units.Units.Inches;
+import static java.util.Map.entry;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.IdealStartingState;
@@ -42,6 +45,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -57,7 +61,24 @@ public class DriveCommands {
   private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
-
+  // FIXME: use the right values, and use Inches.of(), 18 is correct
+  private static final Map<Integer, Pose2d> tagPoses =
+      Map.ofEntries(
+          entry(6, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
+          entry(7, new Pose2d(14.5, 4, Rotation2d.fromDegrees(-90))),
+          entry(8, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
+          entry(9, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
+          entry(10, new Pose2d(11.6, 4, Rotation2d.fromDegrees(90))),
+          entry(11, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
+          entry(17, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
+          entry(18, new Pose2d(Inches.of(144.00), Inches.of(158.50), Rotation2d.fromDegrees(180))),
+          entry(19, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
+          entry(20, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
+          entry(21, new Pose2d(6, 4, Rotation2d.fromDegrees(-90))),
+          entry(22, new Pose2d(3, 4, Rotation2d.fromDegrees(90))));
+  /*Started Manually logging coords - 7, 10, 18 and 21 are all correct,
+  but all the others are unset. Unfortunately, We don't have a very good
+  way to log this*/
   private DriveCommands() {}
 
   private static Translation2d getLinearVelocityFromJoysticks(double x, double y) {
@@ -188,16 +209,23 @@ public class DriveCommands {
           angleController.reset(drive.getRotation().getRadians());
           Pose2d startingPose = drive.getPose();
           Pose2d targetPose = poseSupplier.get();
+          double tid = LimelightHelpers.getFiducialID("limelight");
+          System.out.println("TID: " + tid);
+          var fids = LimelightHelpers.getRawFiducials("limelight");
+          for (var fid : fids) {
+            System.out.println("Raw: " + fid.id + ", " + fid.distToCamera);
+          }
           List<Waypoint> waypoints =
-              List.of(
-                  new Waypoint(null, startingPose.getTranslation(), targetPose.getTranslation()),
-                  new Waypoint(startingPose.getTranslation(), targetPose.getTranslation(), null));
+              PathPlannerPath.waypointsFromPoses(List.of(startingPose, targetPose));
 
           PathConstraints constraints = new PathConstraints(0.5, 0.5, 540, 720, 12, false);
           IdealStartingState startingState = new IdealStartingState(0, startingPose.getRotation());
-          GoalEndState endState = new GoalEndState(0, Rotation2d.fromDegrees(-30));
+          GoalEndState endState = new GoalEndState(0, targetPose.getRotation());
           PathPlannerPath path =
               new PathPlannerPath(waypoints, constraints, startingState, endState);
+          if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
+            path = path.flipPath();
+          }
           return AutoBuilder.followPath(path)
               .beforeStarting(() -> System.out.println("Before follow path"))
               .andThen(() -> System.out.println("AndThen"));
@@ -263,6 +291,12 @@ public class DriveCommands {
                       : drive.getRotation()));
         },
         drive);
+  }
+
+  public static Pose2d getLandingPose(int tag) {
+    var p = tagPoses.get(tag);
+    // FIXME: make this a constant
+    return p.transformBy(new Transform2d(0.4064, 0, new Rotation2d(0)));
   }
 
   /**
