@@ -17,6 +17,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -30,6 +31,7 @@ import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.robot.subsystems.vision.Vision;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -41,6 +43,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   private final Drive drive;
+  private final Vision vision;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -105,6 +108,14 @@ public class RobotContainer {
     autoChooser.addOption(
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
+    // Vision subsystem
+    vision =
+        new Vision(
+            (tid) -> {
+              this.controller.setRumble(RumbleType.kBothRumble, 0.5);
+              this.controller.setRumble(RumbleType.kBothRumble, 0);
+            });
+
     // Configure the button bindings
     configureButtonBindings();
   }
@@ -150,22 +161,28 @@ public class RobotContainer {
 
     // controller.y().onTrue((DriveCommands.tempTest(drive)));
     // controller.y();
+    // we are assuming the driver is sensible, and will go to the tag they last saw close to when
+    // they see it
     controller
         .y()
         .whileTrue(
             DriveCommands.joystickDriveToPose(
                 drive,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
-                () -> new Pose2d(14.18, 5.86, Rotation2d.fromDegrees(-36.77))));
+                () -> {
+                  var targetTag = this.vision.getLastSeenTagID();
+                  if (targetTag == -1) {
+                    return null;
+                  }
+                  return DriveCommands.getLandingPose(targetTag);
+                }));
 
     controller
         .rightBumper()
         .whileTrue(
             DriveCommands.joystickDrive(
                 drive,
-                () -> -controller.getLeftY() * 0.8,
-                () -> -controller.getLeftX() * 0.8,
+                () -> -controller.getLeftY() * 0.5,
+                () -> -controller.getLeftX() * 0.5,
                 () -> -controller.getRightX() * 0.8));
   }
 

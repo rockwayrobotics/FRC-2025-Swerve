@@ -37,6 +37,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.LimelightResults;
 import frc.robot.subsystems.drive.Drive;
@@ -64,18 +65,18 @@ public class DriveCommands {
   // FIXME: use the right values, and use Inches.of(), 18 is correct
   private static final Map<Integer, Pose2d> tagPoses =
       Map.ofEntries(
-          entry(6, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
-          entry(7, new Pose2d(14.5, 4, Rotation2d.fromDegrees(-90))),
-          entry(8, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
-          entry(9, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
-          entry(10, new Pose2d(11.6, 4, Rotation2d.fromDegrees(90))),
-          entry(11, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
-          entry(17, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
+          entry(6, new Pose2d(Inches.of(530.49), Inches.of(130.17), Rotation2d.fromDegrees(300))),
+          entry(7, new Pose2d(Inches.of(546.87), Inches.of(158.50), Rotation2d.fromDegrees(0))),
+          entry(8, new Pose2d(Inches.of(530.49), Inches.of(186.83), Rotation2d.fromDegrees(60))),
+          entry(9, new Pose2d(Inches.of(497.77), Inches.of(186.83), Rotation2d.fromDegrees(120))),
+          entry(10, new Pose2d(Inches.of(481.39), Inches.of(158.50), Rotation2d.fromDegrees(180))),
+          entry(11, new Pose2d(Inches.of(497.77), Inches.of(130.17), Rotation2d.fromDegrees(240))),
+          entry(17, new Pose2d(Inches.of(160.39), Inches.of(130.17), Rotation2d.fromDegrees(240))),
           entry(18, new Pose2d(Inches.of(144.00), Inches.of(158.50), Rotation2d.fromDegrees(180))),
-          entry(19, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
-          entry(20, new Pose2d(3, 4, Rotation2d.fromDegrees(90))),
-          entry(21, new Pose2d(6, 4, Rotation2d.fromDegrees(-90))),
-          entry(22, new Pose2d(3, 4, Rotation2d.fromDegrees(90))));
+          entry(19, new Pose2d(Inches.of(160.39), Inches.of(186.83), Rotation2d.fromDegrees(120))),
+          entry(20, new Pose2d(Inches.of(193.10), Inches.of(186.83), Rotation2d.fromDegrees(60))),
+          entry(21, new Pose2d(Inches.of(209.49), Inches.of(158.50), Rotation2d.fromDegrees(0))),
+          entry(22, new Pose2d(Inches.of(193.10), Inches.of(130.17), Rotation2d.fromDegrees(300))));
   /*Started Manually logging coords - 7, 10, 18 and 21 are all correct,
   but all the others are unset. Unfortunately, We don't have a very good
   way to log this*/
@@ -188,11 +189,7 @@ public class DriveCommands {
         .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
   }
 
-  public static Command joystickDriveToPose(
-      Drive drive,
-      DoubleSupplier xSupplier,
-      DoubleSupplier ySupplier,
-      Supplier<Pose2d> poseSupplier) {
+  public static Command joystickDriveToPose(Drive drive, Supplier<Pose2d> poseSupplier) {
 
     // Create PID controller
     ProfiledPIDController angleController =
@@ -202,13 +199,16 @@ public class DriveCommands {
             ANGLE_KD,
             new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
     angleController.enableContinuousInput(-Math.PI, Math.PI);
+    var targetPose = poseSupplier.get();
+    if (targetPose == null) {
+      return new InstantCommand();
+    }
 
     return Commands.defer(
         () -> {
           System.out.println("Running defer");
           angleController.reset(drive.getRotation().getRadians());
           Pose2d startingPose = drive.getPose();
-          Pose2d targetPose = poseSupplier.get();
           double tid = LimelightHelpers.getFiducialID("limelight");
           System.out.println("TID: " + tid);
           var fids = LimelightHelpers.getRawFiducials("limelight");
