@@ -48,20 +48,20 @@ public final class Constants {
     public static final int BR_TURN_DEV = 8;
 
     // Comp drivebase CAN IDs
-    public static final int FL_DRIVE_COMP = 2;
-    public static final int FL_TURN_COMP = 6;
-    public static final int FR_DRIVE_COMP = 3;
-    public static final int FR_TURN_COMP = 7;
-    public static final int BL_DRIVE_COMP = 9;
-    public static final int BL_TURN_COMP = 5;
-    public static final int BR_DRIVE_COMP = 4;
-    public static final int BR_TURN_COMP = 8;
+    public static final int FL_DRIVE_COMP = 3;
+    public static final int FL_TURN_COMP = 7;
+    public static final int FR_DRIVE_COMP = 4;
+    public static final int FR_TURN_COMP = 8;
+    public static final int BL_DRIVE_COMP = 2;
+    public static final int BL_TURN_COMP = 6;
+    public static final int BR_DRIVE_COMP = 9;
+    public static final int BR_TURN_COMP = 5;
 
     // Common CAN IDs
     public static final int ELEVATOR_BACK = 11;
     public static final int ELEVATOR_FRONT = 12;
-    public static final int PIVOT = 13;
-    public static final int SHOOTER = 14;
+    public static final int PIVOT = 10;
+    public static final int SHOOTER = 13;
   }
 
   public static final class Chute {
