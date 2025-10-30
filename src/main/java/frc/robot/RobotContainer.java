@@ -21,9 +21,21 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ProxyCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.CoralLevel;
+import frc.robot.Constants.Side;
 import frc.robot.commands.DriveCommands;
+import frc.robot.subsystems.chute.Chute;
+import frc.robot.subsystems.chute.ChuteIO;
+import frc.robot.subsystems.chute.ChuteIOReal;
+import frc.robot.subsystems.chute.ChuteIOSim;
+import frc.robot.subsystems.chuterShooter.ChuterShooter;
+import frc.robot.subsystems.chuterShooter.ChuterShooterIO;
+import frc.robot.subsystems.chuterShooter.ChuterShooterIOReal;
+import frc.robot.subsystems.chuterShooter.ChuterShooterIOSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.GyroIO;
@@ -31,6 +43,11 @@ import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIO;
+import frc.robot.subsystems.elevator.ElevatorIOReal;
+import frc.robot.subsystems.elevator.ElevatorIOSim;
+import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.vision.Vision;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -43,15 +60,19 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   private final Drive drive;
+  private final Superstructure superstructure;
+  private final ChuterShooter chuterShooter;
   private final Vision vision;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
+  private final GenericHID operator1Controller = new GenericHID(1);
+  private final GenericHID operator2Controller = new GenericHID(2);
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
 
-  /** The container for the robot. Contains subsystems, OI devices, and commands. */
+  /** The container for the robot. Contains subsystems, IO devices, and commands. */
   public RobotContainer() {
     switch (Constants.currentMode) {
       case REAL:
@@ -63,6 +84,9 @@ public class RobotContainer {
                 new ModuleIOSpark(DriveConstants.swerveModuleConfigsDev[1]), // FR
                 new ModuleIOSpark(DriveConstants.swerveModuleConfigsDev[2]), // BL
                 new ModuleIOSpark(DriveConstants.swerveModuleConfigsDev[3])); // BR
+        superstructure =
+            new Superstructure(new Elevator(new ElevatorIOReal()), new Chute(new ChuteIOReal()));
+        chuterShooter = new ChuterShooter(new ChuterShooterIOReal());
         break;
 
       case SIM:
@@ -74,6 +98,9 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
+        superstructure =
+            new Superstructure(new Elevator(new ElevatorIOSim(0)), new Chute(new ChuteIOSim()));
+        chuterShooter = new ChuterShooter(new ChuterShooterIOSim());
         break;
 
       default:
@@ -85,6 +112,9 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
+        superstructure =
+            new Superstructure(new Elevator(new ElevatorIO() {}), new Chute(new ChuteIO() {}));
+        chuterShooter = new ChuterShooter(new ChuterShooterIO() {});
         break;
     }
 
@@ -159,8 +189,6 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
-    // controller.y().onTrue((DriveCommands.tempTest(drive)));
-    // controller.y();
     // we are assuming the driver is sensible, and will go to the tag they last saw close to when
     // they see it
     controller
@@ -184,6 +212,167 @@ public class RobotContainer {
                 () -> -controller.getLeftY() * 0.5,
                 () -> -controller.getLeftX() * 0.5,
                 () -> -controller.getRightX() * 0.8));
+
+    new JoystickButton(operator2Controller, 1)
+        .whileTrue(
+            Commands.run(
+                () -> {
+                  superstructure.setElevatorGoalHeightMillimeters(
+                      superstructure.elevator.getHeightMillimeters() + 60);
+                },
+                superstructure));
+
+    new JoystickButton(operator2Controller, 2)
+        .whileTrue(
+            Commands.run(
+                () -> {
+                  superstructure.setElevatorGoalHeightMillimeters(
+                      superstructure.elevator.getHeightMillimeters() - 60);
+                },
+                superstructure));
+
+    new JoystickButton(operator2Controller, 3)
+        .whileTrue(
+            Commands.run(
+                () -> {
+                  if (superstructure.getElevatorHeightMillimeters()
+                      > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
+                    superstructure.setChutePivotGoalRads(
+                        superstructure.chute.getPivotAngleRads() + 0.4);
+                  }
+                },
+                superstructure))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
+                },
+                superstructure));
+
+    new JoystickButton(operator2Controller, 8)
+        .whileTrue(
+            Commands.run(
+                () -> {
+                  if (superstructure.getElevatorHeightMillimeters()
+                      > Constants.Chute.CHUTE_MINUMUM_ELEVATOR_HEIGHT_MM) {
+                    superstructure.setChutePivotGoalRads(
+                        superstructure.chute.getPivotAngleRads() - 0.4);
+                  }
+                },
+                superstructure))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  superstructure.chute.setPivotGoalRads(superstructure.chute.getPivotAngleRads());
+                },
+                superstructure));
+
+    new JoystickButton(operator2Controller, 5)
+        .whileTrue(
+            Commands.run(
+                () -> {
+                  chuterShooter.startShooting();
+                },
+                chuterShooter))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  chuterShooter.setShooterMotor(0);
+                },
+                chuterShooter));
+
+    new JoystickButton(operator2Controller, 7)
+        .whileTrue(
+            Commands.run(
+                () -> {
+                  chuterShooter.setShooterMotor(-0.1); // intake
+                },
+                chuterShooter))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  chuterShooter.stopShooting();
+                },
+                chuterShooter));
+
+    new JoystickButton(operator1Controller, 9)
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  superstructure.home();
+                },
+                superstructure));
+
+    new JoystickButton(operator1Controller, 14)
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  superstructure.foldForClimp();
+                },
+                superstructure));
+
+    new JoystickButton(operator1Controller, 4)
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  superstructure.gotoSetpoint(CoralLevel.L3, Side.RIGHT);
+                },
+                superstructure));
+    new JoystickButton(operator1Controller, 6)
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  superstructure.gotoSetpoint(CoralLevel.L3, Side.LEFT);
+                },
+                superstructure));
+    new JoystickButton(operator1Controller, 3)
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  superstructure.gotoSetpoint(CoralLevel.L2, Side.RIGHT);
+                },
+                superstructure));
+    new JoystickButton(operator1Controller, 8)
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  superstructure.gotoSetpoint(CoralLevel.L2, Side.LEFT);
+                },
+                superstructure));
+    new JoystickButton(operator1Controller, 5)
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  superstructure.gotoSetpoint(CoralLevel.L1, Side.LEFT);
+                },
+                superstructure));
+    new JoystickButton(operator1Controller, 7)
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  superstructure.gotoSetpoint(CoralLevel.L1, Side.RIGHT);
+                },
+                superstructure));
+
+    new JoystickButton(operator1Controller, 12)
+        .onTrue(
+            Commands.sequence(
+                new ProxyCommand(
+                    Commands.runOnce(
+                        () -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.LEFT),
+                        superstructure))
+                // new ProxyCommand(chuterShooter.loadCoralChute())
+                ));
+
+    new JoystickButton(operator1Controller, 11)
+        .onTrue(
+            Commands.sequence(
+                new ProxyCommand(
+                    Commands.runOnce(
+                        () -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.RIGHT),
+                        superstructure))
+                // new ProxyCommand(chuterShooter.loadCoralChute())
+                ));
   }
 
   /**
