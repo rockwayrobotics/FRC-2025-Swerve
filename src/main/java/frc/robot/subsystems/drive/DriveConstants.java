@@ -124,7 +124,7 @@ public class DriveConstants {
         .driveMotorId(CAN.FL_DRIVE_COMP)
         .turnMotorId(CAN.FL_TURN_COMP)
         .encoderChannel(2)
-        .encoderOffset(Rotation2d.fromRadians(0))
+        .encoderOffset(Rotation2d.fromRadians(1.439 + Math.PI / 4))
         .turnInverted(true)
         .encoderInverted(false)
         .build(),
@@ -133,7 +133,7 @@ public class DriveConstants {
         .driveMotorId(CAN.FR_DRIVE_COMP)
         .turnMotorId(CAN.FR_TURN_COMP)
         .encoderChannel(3)
-        .encoderOffset(Rotation2d.fromRadians(0))
+        .encoderOffset(Rotation2d.fromRadians(-3.127 - Math.PI / 4))
         .turnInverted(true)
         .encoderInverted(false)
         .build(),
@@ -142,7 +142,7 @@ public class DriveConstants {
         .driveMotorId(CAN.BL_DRIVE_COMP)
         .turnMotorId(CAN.BL_TURN_COMP)
         .encoderChannel(1)
-        .encoderOffset(Rotation2d.fromRadians(0))
+        .encoderOffset(Rotation2d.fromRadians(2.651 + 3 * Math.PI / 4))
         .turnInverted(true)
         .encoderInverted(false)
         .build(),
@@ -151,7 +151,7 @@ public class DriveConstants {
         .driveMotorId(CAN.BR_DRIVE_COMP)
         .turnMotorId(CAN.BR_TURN_COMP)
         .encoderChannel(0)
-        .encoderOffset(Rotation2d.fromRadians(0))
+        .encoderOffset(Rotation2d.fromRadians(-1.94 - 3 * Math.PI / 4))
         .turnInverted(true)
         .encoderInverted(false)
         .build()

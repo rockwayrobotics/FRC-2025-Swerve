@@ -24,12 +24,12 @@ public class ElevatorIOReal implements ElevatorIO {
   protected final SparkMax motorMain = new SparkMax(CAN.ELEVATOR_FRONT, MotorType.kBrushless);
   protected final SparkMax motorFollower = new SparkMax(CAN.ELEVATOR_BACK, MotorType.kBrushless);
 
-  final Tuner elevatorFeedforwardkS = new Tuner("Elevator/feedforward_Ks", 0.1, true);
-  final Tuner elevatorFeedforwardkG = new Tuner("Elevator/feedforward_Kg", 0.4, true);
-  final Tuner elevatorFeedforwardkV = new Tuner("Elevator/feedforward_Kv", 0.01427, true);
-  final Tuner elevatorPID_P = new Tuner("Elevator/Kp", 0.00136, true);
+  final Tuner elevatorFeedforwardkS = new Tuner("Elevator/feedforward_Ks", 0.0, true);
+  final Tuner elevatorFeedforwardkG = new Tuner("Elevator/feedforward_Kg", 0.29, true);
+  final Tuner elevatorFeedforwardkV = new Tuner("Elevator/feedforward_Kv", 0.007, true);
+  final Tuner elevatorPID_P = new Tuner("Elevator/Kp", 0.00435, true);
   final Tuner elevatorPID_I = new Tuner("Elevator/KI", 0, true);
-  final Tuner elevatorPID_D = new Tuner("Elevator/Kd", 0.005, true);
+  final Tuner elevatorPID_D = new Tuner("Elevator/Kd", 0, true);
   final Tuner elevatorMaxNormalizedSpeed = new Tuner("Elevator/normalized_speed_max", 0.6, true);
   final Tuner elevatorMinNormalizedSpeed = new Tuner("Elevator/normalized_speed_min", -0.5, true);
   final Tuner elevatorSoftLimitMin = new Tuner("Elevator/soft_limit_min_mm", 20, true);

@@ -80,10 +80,10 @@ public class RobotContainer {
         drive =
             new Drive(
                 new GyroIONavX(),
-                new ModuleIOSpark(DriveConstants.swerveModuleConfigsDev[0]), // FL
-                new ModuleIOSpark(DriveConstants.swerveModuleConfigsDev[1]), // FR
-                new ModuleIOSpark(DriveConstants.swerveModuleConfigsDev[2]), // BL
-                new ModuleIOSpark(DriveConstants.swerveModuleConfigsDev[3])); // BR
+                new ModuleIOSpark(DriveConstants.swerveModuleConfigsComp[0]), // FL
+                new ModuleIOSpark(DriveConstants.swerveModuleConfigsComp[1]), // FR
+                new ModuleIOSpark(DriveConstants.swerveModuleConfigsComp[2]), // BL
+                new ModuleIOSpark(DriveConstants.swerveModuleConfigsComp[3])); // BR
         superstructure =
             new Superstructure(new Elevator(new ElevatorIOReal()), new Chute(new ChuteIOReal()));
         chuterShooter = new ChuterShooter(new ChuterShooterIOReal());
