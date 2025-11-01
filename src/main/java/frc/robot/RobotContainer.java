@@ -173,7 +173,7 @@ public class RobotContainer {
                 drive,
                 () -> -controller.getLeftY(),
                 () -> -controller.getLeftX(),
-                () -> new Rotation2d()));
+                () -> Rotation2d.fromDegrees(-90))); // new Rotation2d()));
 
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
@@ -201,7 +201,7 @@ public class RobotContainer {
                   if (targetTag == -1) {
                     return null;
                   }
-                  return DriveCommands.getLandingPose(targetTag);
+                  return DriveCommands.getLeftLandingPose(targetTag);
                 }));
 
     controller

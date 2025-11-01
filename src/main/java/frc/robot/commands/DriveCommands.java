@@ -199,10 +199,6 @@ public class DriveCommands {
             ANGLE_KD,
             new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
     angleController.enableContinuousInput(-Math.PI, Math.PI);
-    var targetPose = poseSupplier.get();
-    if (targetPose == null) {
-      return new InstantCommand();
-    }
 
     return Commands.defer(
         () -> {
@@ -211,10 +207,12 @@ public class DriveCommands {
           Pose2d startingPose = drive.getPose();
           double tid = LimelightHelpers.getFiducialID("limelight");
           System.out.println("TID: " + tid);
-          var fids = LimelightHelpers.getRawFiducials("limelight");
-          for (var fid : fids) {
-            System.out.println("Raw: " + fid.id + ", " + fid.distToCamera);
+          var targetPose = poseSupplier.get();
+          if (targetPose == null) {
+            return new InstantCommand();
           }
+          System.out.println("Target pose: " + targetPose);
+
           List<Waypoint> waypoints =
               PathPlannerPath.waypointsFromPoses(List.of(startingPose, targetPose));
 
@@ -296,7 +294,19 @@ public class DriveCommands {
   public static Pose2d getLandingPose(int tag) {
     var p = tagPoses.get(tag);
     // FIXME: make this a constant
-    return p.transformBy(new Transform2d(0.4064, 0, new Rotation2d(0)));
+    return p.transformBy(new Transform2d(0.4064, 0, Rotation2d.fromDegrees(90)));
+  }
+
+  public static Pose2d getLeftLandingPose(int tag) {
+    var p = tagPoses.get(tag);
+    // FIXME: make this a constant
+    return p.transformBy(new Transform2d(0.4476, -0.05, Rotation2d.fromDegrees(90)));
+  }
+
+  public static Pose2d getRightLandingPose(int tag) {
+    var p = tagPoses.get(tag);
+    // FIXME: make this a constant
+    return p.transformBy(new Transform2d(0.4476, -0.52, Rotation2d.fromDegrees(90)));
   }
 
   /**

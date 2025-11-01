@@ -23,7 +23,7 @@ import frc.robot.Constants.CAN;
 import lombok.Builder;
 
 public class DriveConstants {
-  public static final double maxSpeedMetersPerSec = 0.4; // 4.8
+  public static final double maxSpeedMetersPerSec = 4.8;
   public static final double odometryFrequency = 100.0; // Hz
   public static final double trackWidth = Units.inchesToMeters(21.75);
   public static final double wheelBase = Units.inchesToMeters(21.75);
