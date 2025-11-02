@@ -296,19 +296,19 @@ public class DriveCommands {
   public static Pose2d getLandingPose(int tag) {
     var p = tagPoses.get(tag);
     // FIXME: make this a constant
-    return p.transformBy(new Transform2d(0.43, 0.14, Rotation2d.fromDegrees(90)));
+    return p.transformBy(new Transform2d(0.43, 0.2, Rotation2d.fromDegrees(90)));
   }
 
   public static Pose2d getLeftLandingPose(int tag) {
     var p = tagPoses.get(tag);
     // FIXME: make this a constant
-    return p.transformBy(new Transform2d(0.43, -0.02, Rotation2d.fromDegrees(90)));
+    return p.transformBy(new Transform2d(0.43, 0.05, Rotation2d.fromDegrees(90)));
   }
 
   public static Pose2d getRightLandingPose(int tag) {
     var p = tagPoses.get(tag);
     // FIXME: make this a constant
-    return p.transformBy(new Transform2d(0.43, 0.30, Rotation2d.fromDegrees(90)));
+    return p.transformBy(new Transform2d(0.43, 0.35, Rotation2d.fromDegrees(90)));
   }
 
   /**

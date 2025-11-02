@@ -125,6 +125,7 @@ public class RobotContainer {
         break;
     }
 
+    // Named Commands
     NamedCommands.registerCommand(
         "Home",
         Commands.runOnce(
@@ -138,15 +139,16 @@ public class RobotContainer {
         "SetCenter",
         Commands.runOnce(
             () -> {
-              Pose2d pose = new Pose2d(new Translation2d(7.11, 4), Rotation2d.fromDegrees(90));
+              Pose2d pose = new Pose2d(new Translation2d(7.11, 4), Rotation2d.fromDegrees(120));
               if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
                 pose = FlippingUtil.flipFieldPose(pose);
               }
               drive.setPose(pose);
               Logger.recordOutput("Auto/SetCenter", pose);
             }));
+
     NamedCommands.registerCommand(
-        "SetStation3",
+        "SetStation1",
         Commands.runOnce(
             () -> {
               Pose2d pose = new Pose2d(new Translation2d(7.120, 2), Rotation2d.fromDegrees(90));
@@ -157,13 +159,24 @@ public class RobotContainer {
               Logger.recordOutput("Auto/SetStation3", pose);
             }));
 
-    // Named Commands
+    NamedCommands.registerCommand(
+        "SetStation3",
+        Commands.runOnce(
+            () -> {
+              Pose2d pose = new Pose2d(new Translation2d(7.120, 2), Rotation2d.fromDegrees(60));
+              if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
+                pose = FlippingUtil.flipFieldPose(pose);
+              }
+              drive.setPose(pose);
+              Logger.recordOutput("Auto/SetStation3", pose);
+            }));
+
     NamedCommands.registerCommand(
         "ScoreL1",
         Commands.sequence(
             Commands.runOnce(
                 () -> superstructure.gotoSetpoint(CoralLevel.L1, Side.RIGHT), superstructure),
-            Commands.waitUntil(() -> superstructure.atGoal()),
+            Commands.race(Commands.waitUntil(() -> superstructure.atGoal()), Commands.waitSeconds(2)),
             Commands.runOnce(() -> chuterShooter.startShooting(), chuterShooter),
             Commands.waitSeconds(2.0),
             Commands.runOnce(() -> chuterShooter.stopShooting(), chuterShooter)));
@@ -187,6 +200,20 @@ public class RobotContainer {
             Commands.runOnce(() -> chuterShooter.startShooting(), chuterShooter),
             Commands.waitSeconds(2.0),
             Commands.runOnce(() -> chuterShooter.stopShooting(), chuterShooter)));
+
+    NamedCommands.registerCommand(
+        "IntakeRight",
+        Commands.sequence(
+            Commands.runOnce(
+                () -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.RIGHT), superstructure),
+            Commands.waitUntil(() -> superstructure.atGoal())));
+
+    NamedCommands.registerCommand(
+        "IntakeLeft",
+        Commands.sequence(
+            Commands.runOnce(
+                () -> superstructure.gotoSetpoint(CoralLevel.Intake, Side.LEFT), superstructure),
+            Commands.waitUntil(() -> superstructure.atGoal())));
 
     NamedCommands.registerCommand(
         "Fold", Commands.runOnce(() -> superstructure.foldForClimp(), superstructure));

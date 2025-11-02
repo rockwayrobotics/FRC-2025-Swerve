@@ -35,6 +35,8 @@ public class GyroIONavX implements GyroIO {
   private final Queue<Double> yawPositionQueue;
   private final Queue<Double> yawTimestampQueue;
 
+  // IDEA: Use magnetometer reading to initialize gyro position after calibrating on field
+  // so that we know our heading at startup?
   public GyroIONavX() {
     yawTimestampQueue = SparkOdometryThread.getInstance().makeTimestampQueue();
     yawPositionQueue = SparkOdometryThread.getInstance().registerSignal(navX::getAngle);
