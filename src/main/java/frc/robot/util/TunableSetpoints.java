@@ -18,7 +18,7 @@ public class TunableSetpoints {
   // L2:
   private final Tuner L2_elevator_height_mm = new Tuner("Scoring/L2/elevator_height_mm", 640, true);
   private final Tuner L2_chute_pivot_angle_rads =
-      new Tuner("Scoring/L2/chute_pivot_angle_rads", 1.371, true);
+      new Tuner("Scoring/L2/chute_pivot_angle_rads", 1.348, true);
   private final Tuner L2_shoot_speed_normalized =
       new Tuner("Scoring/L2/shoot_speed_normalized", 0.5, true);
 
@@ -26,7 +26,7 @@ public class TunableSetpoints {
   private final Tuner L3_elevator_height_mm =
       new Tuner("Scoring/L3/elevator_height_mm", 1045, true);
   private final Tuner L3_chute_pivot_angle_rads =
-      new Tuner("Scoring/L3/chute_pivot_angle_rads", 1.38, true);
+      new Tuner("Scoring/L3/chute_pivot_angle_rads", 1.29, true);
   private final Tuner L3_shoot_speed_normalized =
       new Tuner("Scoring/L3/shoot_speed_normalized", 0.5, true);
 
