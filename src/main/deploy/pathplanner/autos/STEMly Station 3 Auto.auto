@@ -13,19 +13,25 @@
         {
           "type": "named",
           "data": {
-            "name": "SetCenter"
+            "name": "SetStation3"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "STEMly Station 2"
+            "pathName": "STEMly Station 3"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "ScoreL1"
+            "name": "ScoreL2"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "STEMly Station 3b"
           }
         },
         {

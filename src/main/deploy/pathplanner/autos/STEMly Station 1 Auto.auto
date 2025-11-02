@@ -5,6 +5,18 @@
     "data": {
       "commands": [
         {
+          "type": "named",
+          "data": {
+            "name": "Home"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "SetCenter"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "STEMly Station 1"

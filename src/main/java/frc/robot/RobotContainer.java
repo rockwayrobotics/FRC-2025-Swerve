@@ -145,8 +145,29 @@ public class RobotContainer {
               drive.setPose(pose);
               Logger.recordOutput("Auto/SetCenter", pose);
             }));
+    NamedCommands.registerCommand(
+        "SetStation3",
+        Commands.runOnce(
+            () -> {
+              Pose2d pose = new Pose2d(new Translation2d(7.120, 2), Rotation2d.fromDegrees(90));
+              if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
+                pose = FlippingUtil.flipFieldPose(pose);
+              }
+              drive.setPose(pose);
+              Logger.recordOutput("Auto/SetStation3", pose);
+            }));
 
     // Named Commands
+    NamedCommands.registerCommand(
+        "ScoreL1",
+        Commands.sequence(
+            Commands.runOnce(
+                () -> superstructure.gotoSetpoint(CoralLevel.L1, Side.RIGHT), superstructure),
+            Commands.waitUntil(() -> superstructure.atGoal()),
+            Commands.runOnce(() -> chuterShooter.startShooting(), chuterShooter),
+            Commands.waitSeconds(2.0),
+            Commands.runOnce(() -> chuterShooter.stopShooting(), chuterShooter)));
+
     NamedCommands.registerCommand(
         "ScoreL2",
         Commands.sequence(
