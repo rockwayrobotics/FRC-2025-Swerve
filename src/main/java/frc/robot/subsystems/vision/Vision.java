@@ -4,8 +4,10 @@ import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.commands.DriveCommands;
 import java.util.Set;
 import java.util.function.IntConsumer;
+import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
 
@@ -29,6 +31,23 @@ public class Vision extends SubsystemBase {
 
   @Override
   public void periodic() {
+    if (this.lastSeenTagID >= 1) {
+      switch (DriveCommands.targetSide) {
+        case 1: // center
+          Logger.recordOutput(
+              "Vision/targetPose", DriveCommands.getLandingPose(this.lastSeenTagID));
+          break;
+        case 2: // right
+          Logger.recordOutput(
+              "Vision/targetPose", DriveCommands.getRightLandingPose(this.lastSeenTagID));
+          break;
+        case 0: // left
+        default:
+          Logger.recordOutput(
+              "Vision/targetPose", DriveCommands.getLeftLandingPose(this.lastSeenTagID));
+          break;
+      }
+    }
     var tid = (int) seenTag.get();
     if (tid == this.lastAcknowledgedTag) {
       return;
@@ -38,6 +57,7 @@ public class Vision extends SubsystemBase {
       this.lastSeenTagID = tid;
       this.onLastSeenTagChange.accept(tid);
       this.lastSeenTagPublisher.accept(tid);
+      Logger.recordOutput("Vision/targetPose", DriveCommands.getLeftLandingPose(tid));
     }
   }
 }

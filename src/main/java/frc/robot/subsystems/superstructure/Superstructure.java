@@ -172,6 +172,10 @@ public class Superstructure extends SubsystemBase {
     }
   }
 
+  public boolean atGoal() {
+    return elevator.atGoal() && chute.isPivotAtGoal();
+  }
+
   public void stayStill() {
     elevator.stayStill();
     chute.stayStill();

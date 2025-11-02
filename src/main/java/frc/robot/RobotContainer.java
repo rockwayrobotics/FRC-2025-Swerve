@@ -14,8 +14,13 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
@@ -24,6 +29,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ProxyCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.CoralLevel;
 import frc.robot.Constants.Side;
@@ -49,6 +55,7 @@ import frc.robot.subsystems.elevator.ElevatorIOReal;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.vision.Vision;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -118,6 +125,51 @@ public class RobotContainer {
         break;
     }
 
+    NamedCommands.registerCommand(
+        "Home",
+        Commands.runOnce(
+            () -> {
+              superstructure.elevator.home();
+              superstructure.chute.home();
+              Logger.recordOutput("Auto/RanHome", true);
+            }));
+
+    NamedCommands.registerCommand(
+        "SetCenter",
+        Commands.runOnce(
+            () -> {
+              Pose2d pose = new Pose2d(new Translation2d(7.11, 4), Rotation2d.fromDegrees(90));
+              if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
+                pose = FlippingUtil.flipFieldPose(pose);
+              }
+              drive.setPose(pose);
+              Logger.recordOutput("Auto/SetCenter", pose);
+            }));
+
+    // Named Commands
+    NamedCommands.registerCommand(
+        "ScoreL2",
+        Commands.sequence(
+            Commands.runOnce(
+                () -> superstructure.gotoSetpoint(CoralLevel.L2, Side.RIGHT), superstructure),
+            Commands.waitUntil(() -> superstructure.atGoal()),
+            Commands.runOnce(() -> chuterShooter.startShooting(), chuterShooter),
+            Commands.waitSeconds(2.0),
+            Commands.runOnce(() -> chuterShooter.stopShooting(), chuterShooter)));
+
+    NamedCommands.registerCommand(
+        "ScoreL3",
+        Commands.sequence(
+            Commands.runOnce(
+                () -> superstructure.gotoSetpoint(CoralLevel.L3, Side.RIGHT), superstructure),
+            Commands.waitUntil(() -> superstructure.atGoal()),
+            Commands.runOnce(() -> chuterShooter.startShooting(), chuterShooter),
+            Commands.waitSeconds(2.0),
+            Commands.runOnce(() -> chuterShooter.stopShooting(), chuterShooter)));
+
+    NamedCommands.registerCommand(
+        "Fold", Commands.runOnce(() -> superstructure.foldForClimp(), superstructure));
+
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
     autoChooser.addOption("First Auto", DriveCommands.firstAuto(drive));
@@ -161,8 +213,8 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
+            () -> -controller.getLeftY() * 0.7,
+            () -> -controller.getLeftX() * 0.7,
             () -> -controller.getRightX()));
 
     // Lock to 0° when A button is held
@@ -171,8 +223,8 @@ public class RobotContainer {
         .whileTrue(
             DriveCommands.joystickDriveAtAngle(
                 drive,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
+                () -> -controller.getLeftY() * 0.7,
+                () -> -controller.getLeftX() * 0.7,
                 () -> Rotation2d.fromDegrees(-90))); // new Rotation2d()));
 
     // Switch to X pattern when X button is pressed
@@ -201,7 +253,15 @@ public class RobotContainer {
                   if (targetTag == -1) {
                     return null;
                   }
-                  return DriveCommands.getLeftLandingPose(targetTag);
+                  switch (DriveCommands.targetSide) {
+                    case 1: // center
+                      return DriveCommands.getLandingPose(targetTag);
+                    case 2: // right
+                      return DriveCommands.getRightLandingPose(targetTag);
+                    case 0: // left
+                    default:
+                      return DriveCommands.getLeftLandingPose(targetTag);
+                  }
                 }));
 
     controller
@@ -211,7 +271,16 @@ public class RobotContainer {
                 drive,
                 () -> -controller.getLeftY() * 0.5,
                 () -> -controller.getLeftX() * 0.5,
-                () -> -controller.getRightX() * 0.8));
+                () -> -controller.getRightX() * 0.7));
+
+    controller
+        .leftBumper()
+        .whileTrue(
+            DriveCommands.joystickDrive(
+                drive,
+                () -> -controller.getLeftY(),
+                () -> -controller.getLeftX(),
+                () -> -controller.getRightX()));
 
     new JoystickButton(operator2Controller, 1)
         .whileTrue(
@@ -373,6 +442,24 @@ public class RobotContainer {
                         superstructure))
                 // new ProxyCommand(chuterShooter.loadCoralChute())
                 ));
+    new POVButton(operator2Controller, 90)
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  DriveCommands.targetSide = 2; // right
+                }));
+    new POVButton(operator2Controller, 180)
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  DriveCommands.targetSide = 1; // center
+                }));
+    new POVButton(operator2Controller, 270)
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  DriveCommands.targetSide = 0; // left
+                }));
   }
 
   /**

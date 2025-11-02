@@ -53,6 +53,8 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class DriveCommands {
+
+  public static int targetSide = 0;
   private static final double DEADBAND = 0.3;
   private static final double ANGLE_KP = 5.0;
   private static final double ANGLE_KD = 0.4;
@@ -216,7 +218,7 @@ public class DriveCommands {
           List<Waypoint> waypoints =
               PathPlannerPath.waypointsFromPoses(List.of(startingPose, targetPose));
 
-          PathConstraints constraints = new PathConstraints(0.5, 0.5, 540, 720, 12, false);
+          PathConstraints constraints = new PathConstraints(1, 0.5, 540, 720, 12, false);
           IdealStartingState startingState = new IdealStartingState(0, startingPose.getRotation());
           GoalEndState endState = new GoalEndState(0, targetPose.getRotation());
           PathPlannerPath path =
@@ -294,19 +296,19 @@ public class DriveCommands {
   public static Pose2d getLandingPose(int tag) {
     var p = tagPoses.get(tag);
     // FIXME: make this a constant
-    return p.transformBy(new Transform2d(0.4064, 0, Rotation2d.fromDegrees(90)));
+    return p.transformBy(new Transform2d(0.43, 0.14, Rotation2d.fromDegrees(90)));
   }
 
   public static Pose2d getLeftLandingPose(int tag) {
     var p = tagPoses.get(tag);
     // FIXME: make this a constant
-    return p.transformBy(new Transform2d(0.4476, -0.05, Rotation2d.fromDegrees(90)));
+    return p.transformBy(new Transform2d(0.43, -0.02, Rotation2d.fromDegrees(90)));
   }
 
   public static Pose2d getRightLandingPose(int tag) {
     var p = tagPoses.get(tag);
     // FIXME: make this a constant
-    return p.transformBy(new Transform2d(0.4476, -0.52, Rotation2d.fromDegrees(90)));
+    return p.transformBy(new Transform2d(0.43, 0.30, Rotation2d.fromDegrees(90)));
   }
 
   /**
